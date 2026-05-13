@@ -3,9 +3,23 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sorriso Ranzani — Atendimento odontológico humanizado em São Bernardo do Campo</title>
-<meta name="description" content="Dra. Marcela — cirurgiã-dentista no Centro de São Bernardo do Campo. Atendimento humanizado, prevenção e saúde bucal integral. Agende sua avaliação pelo WhatsApp." />
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QD7CWVZLNF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
+  gtag('config', 'G-QD7CWVZLNF');
+</script>
+<title>Sorriso Ranzani — Atendimento odontológico humanizado em São Bernardo do Campo</title>
+<meta name="description" content="Dentista em São Bernardo do Campo com atendimento humanizado, prevenção e tratamentos clínicos. Agende sua avaliação na Sorriso Ranzani.">
+
+<meta name="theme-color" content="#0B1F3A" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Sorriso Ranzani" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="assets/favicon.png" />
 <link rel="icon" type="image/png" href="assets/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -755,6 +769,78 @@
     }
     .tooth-cursor{display:none}
   }
+  .install-banner{
+    position:fixed;
+    left:16px;
+    right:16px;
+    bottom:16px;
+    z-index:120;
+    display:none;
+    align-items:flex-start;
+    gap:14px;
+    padding:16px 18px;
+    border-radius:20px;
+    background:rgba(11,31,58,.96);
+    color:#fff;
+    box-shadow:0 18px 48px -24px rgba(11,31,58,.7);
+  }
+  .install-banner.is-visible{display:flex}
+  .install-banner__icon{
+    flex-shrink:0;
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    background:rgba(255,255,255,.12);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .install-banner__icon img{width:100%; height:100%; object-fit:cover}
+  .install-banner__copy{min-width:0; flex:1}
+  .install-banner__title{
+    margin:0 0 6px;
+    font-size:15px;
+    font-weight:600;
+    color:#fff;
+  }
+  .install-banner__text{
+    margin:0;
+    font-size:13px;
+    line-height:1.55;
+    color:rgba(255,255,255,.76);
+  }
+  .install-banner__actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .install-banner__btn{
+    appearance:none;
+    border:0;
+    border-radius:999px;
+    padding:10px 14px;
+    font:inherit;
+    font-size:12px;
+    cursor:pointer;
+  }
+  .install-banner__btn--primary{
+    background:var(--teal);
+    color:#fff;
+  }
+  .install-banner__btn--ghost{
+    background:transparent;
+    color:rgba(255,255,255,.8);
+    border:1px solid rgba(255,255,255,.18);
+  }
+  @media (min-width: 861px){
+    .install-banner{max-width:420px; left:auto}
+  }
+  @media (max-width: 560px){
+    .install-banner{left:12px; right:12px; bottom:12px; padding:14px}
+  }
 </style>
 </head>
 <body>
@@ -1393,8 +1479,111 @@
     });
   }
 
+  let deferredInstallPrompt = null;
+
+  function isStandaloneMode() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function isMobileDevice() {
+    return window.matchMedia('(max-width: 860px), (pointer: coarse)').matches;
+  }
+
+  function isIosDevice() {
+    return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  }
+
+  function hideInstallBanner() {
+    const banner = document.querySelector('.install-banner');
+    if (!banner) return;
+    banner.classList.remove('is-visible');
+  }
+
+  function dismissInstallBanner() {
+    window.localStorage.setItem('sr-install-banner-dismissed', '1');
+    hideInstallBanner();
+  }
+
+  function buildInstallBanner(message, primaryLabel, onPrimaryClick) {
+    if (!isMobileDevice() || isStandaloneMode()) return null;
+    if (window.localStorage.getItem('sr-install-banner-dismissed') === '1') return null;
+
+    const existingBanner = document.querySelector('.install-banner');
+    if (existingBanner) existingBanner.remove();
+
+    const banner = document.createElement('aside');
+    banner.className = 'install-banner';
+    banner.setAttribute('role', 'dialog');
+    banner.setAttribute('aria-label', 'Instalar atalho do site');
+    banner.innerHTML = `
+      <div class="install-banner__icon">
+        <img src="assets/favicon.png" alt="Sorriso Ranzani" />
+      </div>
+      <div class="install-banner__copy">
+        <p class="install-banner__title">Adicionar atalho na tela inicial</p>
+        <p class="install-banner__text">${message}</p>
+        <div class="install-banner__actions">
+          <button class="install-banner__btn install-banner__btn--primary" type="button">${primaryLabel}</button>
+          <button class="install-banner__btn install-banner__btn--ghost" type="button" data-dismiss-install>Agora não</button>
+        </div>
+      </div>
+    `;
+
+    banner.querySelector('.install-banner__btn--primary').addEventListener('click', onPrimaryClick);
+    banner.querySelector('[data-dismiss-install]').addEventListener('click', dismissInstallBanner);
+    document.body.appendChild(banner);
+
+    window.setTimeout(() => banner.classList.add('is-visible'), 1200);
+    return banner;
+  }
+
+  function initInstallPrompt() {
+    if (!isMobileDevice() || isStandaloneMode()) return;
+
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+
+      buildInstallBanner(
+        'Salve a Sorriso Ranzani no celular para abrir o site com um toque sempre que precisar.',
+        'Adicionar',
+        async () => {
+          if (!deferredInstallPrompt) return;
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
+          deferredInstallPrompt = null;
+          if (choice.outcome === 'accepted') {
+            hideInstallBanner();
+          }
+        }
+      );
+    });
+
+    window.addEventListener('appinstalled', () => {
+      window.localStorage.setItem('sr-install-banner-dismissed', '1');
+      hideInstallBanner();
+    });
+
+    if (isIosDevice()) {
+      buildInstallBanner(
+        'Toque em compartilhar no navegador e escolha "Adicionar à Tela de Início" para salvar este site como atalho.',
+        'Entendi',
+        dismissInstallBanner
+      );
+    }
+  }
+
+  function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
   initScrollReveal();
   initToothCursor();
+  initInstallPrompt();
+  registerServiceWorker();
 </script>
 
 <!-- ============== TWEAKS ============== -->
